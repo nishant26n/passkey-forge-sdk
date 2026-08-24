@@ -1,12 +1,12 @@
 # use-passkey
 
+[![npm version](https://img.shields.io/npm/v/use-passkey.svg)](https://www.npmjs.com/package/use-passkey)
+
 A framework-agnostic React hook for WebAuthn/passkey registration and login. Wraps [`@simplewebauthn/browser`](https://simplewebauthn.dev) against a small REST contract — any backend built with `@simplewebauthn/server` that exposes the four endpoints below can use it.
 
-Extracted from [PasskeyForge](https://github.com/nishant26n/passkeyforge)'s own passkey UI, which remains the reference implementation of the backend side of this contract.
+Extracted from [PasskeyForge](https://github.com/nishant26n/passkeyforge)'s own passkey UI — and PasskeyForge now runs on this package instead of its own inline copy of the same logic, so the extraction is exercised by a real app in production, not just by the Storybook demo in this repo.
 
-> Not published to npm yet — this is the hook + Storybook docs, extracted and validated first. Publishing is a small follow-up (`npm publish` + a version bump) once the API has settled.
-
-## Install (once published)
+## Install
 
 ```bash
 npm install use-passkey @simplewebauthn/browser
@@ -89,6 +89,15 @@ const { register, error } = usePasskey();
 ### Why `isRegistering` / `isLoggingIn` are separate
 
 A single shared `pending` boolean across a register button and a login button makes both spin at once when only one is actually running. This isn't hypothetical — it's a real bug PasskeyForge's own login page shipped and had to fix (two buttons, one `pending` flag, both spinners lit on every click) before this hook existed. Keeping the two flags independent here means anyone using this hook gets that fix for free instead of rediscovering it.
+
+For the same reason, PasskeyForge's login page — which has two independent passkey buttons (email-first and usernameless) — calls `usePasskey()` **twice**, once per button, rather than sharing one instance:
+
+```tsx
+const emailAuth = usePasskey();
+const usernamelessAuth = usePasskey();
+```
+
+Each hook instance's state is local to that call, so this gives each button its own `isLoggingIn`/`error` for free instead of building a second flag by hand.
 
 ## Development
 
