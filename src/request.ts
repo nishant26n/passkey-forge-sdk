@@ -1,27 +1,32 @@
 import { PasskeyError } from "./types";
 
 /**
- * POSTs JSON and returns the parsed body. Throws a PasskeyError carrying the
- * server's own `{ error }` message (matching the convention most WebAuthn
- * backends already use) when the response isn't ok, and a distinct
- * `network_error` when the request never reached the server at all.
+ * Shared fetch+parse+error-mapping logic behind postJson/getJson/deleteJson.
+ * Throws a PasskeyError carrying the server's own `{ error }` message
+ * (matching the convention most WebAuthn backends already use) when the
+ * response isn't ok, and a distinct `network_error` when the request never
+ * reached the server at all (including AbortController cancellation).
  */
-export async function postJson(
+async function requestJson(
+  method: "GET" | "POST" | "DELETE",
   url: string,
-  body: unknown,
+  body: unknown | undefined,
   init?: RequestInit,
 ): Promise<unknown> {
   let response: Response;
 
   try {
     response = await fetch(url, {
-      method: "POST",
+      method,
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...init?.headers,
-      },
-      body: JSON.stringify(body),
+      headers:
+        body === undefined
+          ? init?.headers
+          : {
+              "Content-Type": "application/json",
+              ...init?.headers,
+            },
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new PasskeyError(
@@ -41,4 +46,29 @@ export async function postJson(
   }
 
   return data;
+}
+
+/** POSTs JSON and returns the parsed body. */
+export async function postJson(
+  url: string,
+  body: unknown,
+  init?: RequestInit,
+): Promise<unknown> {
+  return requestJson("POST", url, body, init);
+}
+
+/** GETs and returns the parsed JSON body. */
+export async function getJson(
+  url: string,
+  init?: RequestInit,
+): Promise<unknown> {
+  return requestJson("GET", url, undefined, init);
+}
+
+/** DELETEs and returns the parsed JSON body. */
+export async function deleteJson(
+  url: string,
+  init?: RequestInit,
+): Promise<unknown> {
+  return requestJson("DELETE", url, undefined, init);
 }
