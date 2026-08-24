@@ -1,6 +1,6 @@
 {
   "name": "use-passkey",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A framework-agnostic React hook for WebAuthn/passkey registration and login, wrapping @simplewebauthn/browser against a REST contract any backend can implement.",
   "license": "MIT",
   "type": "module",
